@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hive_ce_flutter/hive_flutter.dart';
 
 import '../models/to_do.dart';
-import '../utils/HiveService.dart';
+import '../utils/firebase_service.dart';
 import '../utils/pref_helper.dart';
 import '../widgets/empty_tasks_widget.dart';
 import '../widgets/stat_card.dart';
@@ -13,6 +12,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final FirestoreService firestoreService = FirestoreService();
+
     return Scaffold(
       backgroundColor: const Color(0xFFFCE8E8),
       floatingActionButton: FloatingActionButton(
@@ -44,7 +45,6 @@ class HomeScreen extends StatelessWidget {
                 ),
               ),
             ),
-
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -67,13 +67,18 @@ class HomeScreen extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 16),
-
                     Expanded(
-                      child: ValueListenableBuilder(
-                        valueListenable: HiveService.box.listenable(),
-                        builder: (context, Box box, _) {
-                          final List<ToDo> allTasks = HiveService.getTasks();
+                      child: StreamBuilder<List<ToDo>>(
+                        stream: firestoreService.getTasks(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
 
+                          final List<ToDo> allTasks = snapshot.data ?? [];
                           final int toDoCount = allTasks
                               .where((t) => !t.isComplete)
                               .length;
@@ -103,9 +108,8 @@ class HomeScreen extends StatelessWidget {
                                 ],
                               ),
                               const SizedBox(height: 24),
-
                               Expanded(
-                                child: box.isEmpty
+                                child: allTasks.isEmpty
                                     ? const Center(child: EmptyTasksWidget())
                                     : ListView.builder(
                                         itemCount: allTasks.length,
@@ -147,7 +151,7 @@ class HomeScreen extends StatelessWidget {
                                                 onChanged: (bool? value) {
                                                   todo.isComplete =
                                                       value ?? false;
-                                                  HiveService.updateTask(
+                                                  firestoreService.updateTask(
                                                     index,
                                                     todo,
                                                   );
@@ -185,7 +189,7 @@ class HomeScreen extends StatelessWidget {
                                                   color: Colors.redAccent,
                                                 ),
                                                 onPressed: () =>
-                                                    HiveService.deleteTask(
+                                                    firestoreService.deleteTask(
                                                       index,
                                                     ),
                                               ),

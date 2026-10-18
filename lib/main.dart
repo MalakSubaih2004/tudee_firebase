@@ -1,13 +1,15 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:tudee1/utils/HiveService.dart';
+
 import 'utils/pref_helper.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  await HiveService.init();
   final String savedName = await PrefHelper.getUserName();
 
   runApp(MyApp(savedName: savedName));

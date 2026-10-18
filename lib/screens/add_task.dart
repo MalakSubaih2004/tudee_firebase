@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/to_do.dart';
 import '../utils/HiveService.dart';
+import '../utils/firebase_service.dart';
 import '../widgets/custom_text_field.dart';
 
 class AddTaskScreen extends StatefulWidget {
@@ -33,6 +34,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   void _saveOrUpdateTask() async {
     final title = _titleController.text.trim();
     final desc = _descController.text.trim();
+    final firestoreService = FirestoreService();
 
     if (title.isNotEmpty) {
       if (isEditing) {
@@ -41,10 +43,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           description: desc,
           isComplete: widget.taskToEdit!.isComplete,
         );
-        await HiveService.updateTask(widget.taskIndex!, updatedTodo);
+        await firestoreService.updateTask(widget.taskIndex!, updatedTodo);
       } else {
         final newTodo = ToDo(title: title, description: desc);
-        await HiveService.addTask(newTodo);
+        firestoreService.addTask(newTodo);
       }
 
       if (mounted) {
@@ -56,7 +58,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       );
     }
   }
-
   @override
   void dispose() {
     _titleController.dispose();
